@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Humor Translator: Pro</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --esfp: #f97316;   /* Kevin Hart */
+      --infp: #8b5cf6;   /* Louis CK */
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container { width: 100%; max-width: 900px; }
+
+    header { text-align: center; margin-bottom: 30px; }
+    h1 { color: var(--accent); margin: 0; font-size: 2.2rem; letter-spacing: -1px; }
+    .subtitle { color: var(--muted); font-size: 1.1rem; margin-top: 10px; font-weight: 500; }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      background: var(--card);
+      padding: 5px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      gap: 5px;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 14px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+    .nav-btn.active { background: var(--accent); color: white; }
+    .nav-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: var(--text); }
+
+    /* Layout */
+    .section { display: none; animation: fadeIn 0.4s ease; }
+    .section.active { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    h2 { margin-top: 0; font-size: 1.5rem; }
+    p { line-height: 1.6; color: #cbd5e1; }
+
+    /* Diagnosis Tab Elements */
+    .case-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .phrase-box {
+      background: rgba(0,0,0,0.3);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border-left: 5px solid var(--muted);
+    }
+    
+    .options-grid { display: grid; gap: 12px; grid-template-columns: 1fr; margin-top: 20px; }
+    .option-btn {
+      padding: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 1rem;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .option-btn:hover { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+    .option-btn.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.15); }
+    .option-btn.wrong { border-color: var(--danger); background: rgba(239, 68, 68, 0.15); }
+
+    .feedback {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+
+    /* Lab Elements */
+    .lab-controls { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 25px 0; }
+    .control-group h4 { margin: 0 0 12px; color: var(--muted); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+    
+    .toggle-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .toggle-btn.selected { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 0 10px rgba(59,130,246,0.3); }
+
+    .console {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      font-family: 'Consolas', 'Courier New', monospace;
+      padding: 20px;
+      border-radius: 10px;
+      color: var(--success);
+      min-height: 120px;
+      margin-top: 25px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .btn-action:active { transform: scale(0.98); }
+    .btn-next { background: rgba(255,255,255,0.1); margin-top: 20px; display: none; }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>AI Humor Translator</h1>
+    <div class="subtitle">Advanced Stylistic Training & Persona Preservation</div>
+  </header>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="app.showTab('theory')">1. Теория Личности</button>
+    <button class="nav-btn" onclick="app.showTab('diagnosis')">2. Диагностика (Quiz)</button>
+    <button class="nav-btn" onclick="app.showTab('lab')">3. Лаборатория (Sim)</button>
+  </nav>
+
+  <section id="theory" class="section active">
+    <div class="card">
+      <h2>Психолингвистика в переводе</h2>
+      <p>Простой перевод передает смысл, но часто убивает «голос» автора. Чтобы стендап звучал живо, переводчик (или ИИ) должен учитывать психотип комика (MBTI).</p>
+      
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px;">
+        <div style="background:rgba(249, 115, 22, 0.1); padding:20px; border-radius:12px; border:1px solid var(--esfp);">
+          <h3 style="color:var(--esfp); margin:0;">Kevin Hart (ESFP)</h3>
+          <p style="font-size:0.9rem;"><strong>Маркеры:</strong> Гипербола, капс, восклицания, повторы, грубый сленг, энергия.</p>
+          <p style="font-size:0.9rem;"><strong>Главная ошибка ИИ:</strong> Потеря энергии. Превращение «крика» в спокойное утверждение.</p>
+        </div>
+        <div style="background:rgba(139, 92, 246, 0.1); padding:20px; border-radius:12px; border:1px solid var(--infp);">
+          <h3 style="color:var(--infp); margin:0;">Louis C.K. (INFP)</h3>
+          <p style="font-size:0.9rem;"><strong>Маркеры:</strong> Сложный синтаксис, самоуничижение, цинизм, «грустная» грубость.</p>
+          <p style="font-size:0.9rem;"><strong>Главная ошибка ИИ:</strong> Потеря иронии. Превращение тонкой шутки в простое оскорбление.</p>
+        </div>
+      </div>
+      <br>
+      <button class="btn-action" onclick="app.showTab('diagnosis')">Перейти к практике →</button>
+    </div>
+  </section>
+
+  <section id="diagnosis" class="section">
+    <div class="card">
+      <div class="case-header">
+        <h2>Анализ ошибок ИИ</h2>
+        <span id="q-counter" class="badge" style="background:rgba(255,255,255,0.1);">Case 1/5</span>
+      </div>
+      <p>Определите, что именно потеряла нейросеть при переводе (Style Loss).</p>
+      
+      <div id="quiz-content"></div> <div id="quiz-feedback" class="feedback"></div>
+      <button id="quiz-next-btn" class="btn-action btn-next" onclick="app.nextQuestion()">Следующий кейс</button>
+    </div>
+  </section>
+
+  <section id="lab" class="section">
+    <div class="card">
+      <h2>Промпт-инжиниринг</h2>
+      <p>ИИ выдал «плохой» перевод. Настройте параметры промпта (Персона + Стратегия), чтобы исправить это.</p>
+
+      <div id="lab-scenario" class="phrase-box" style="border-color: var(--accent);">
+        </div>
+
+      <div class="lab-controls">
+        <div class="control-group">
+          <h4>1. Профиль Личности (Persona)</h4>
+          <button class="toggle-btn" onclick="app.setPrompt('p', 'generic', this)">🤖 Generic (Без личности)</button>
+          <button class="toggle-btn" onclick="app.setPrompt('p', 'esfp', this)">🔥 ESFP (Energy/Hart)</button>
+          <button class="toggle-btn" onclick="app.setPrompt('p', 'infp', this)">🌀 INFP (Cynical/Louis)</button>
+        </div>
+        <div class="control-group">
+          <h4>2. Стратегия (Strategy)</h4>
+          <button class="toggle-btn" onclick="app.setPrompt('s', 'soft', this)">🛡️ Euphemistic (Смягчение)</button>
+          <button class="toggle-btn" onclick="app.setPrompt('s', 'raw', this)">⚔️ Direct/Adaptive (Хардкор)</button>
+        </div>
+      </div>
+
+      <button class="btn-action" onclick="app.runSimulation()">Сгенерировать перевод</button>
+      <div id="lab-console" class="console" style="display:none;"></div>
+      <button id="lab-next-btn" class="btn-action btn-next" onclick="app.nextLab()">Следующая фраза</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/**
+ * БАЗА ДАННЫХ
+ */
+const DATABASE = {
+  // Данные для Квиза (Диагностика)
+  quiz: [
+    {
+      author: "Kevin Hart",
+      type: "ESFP",
+      source: "Cold as sh* out this bitch.", 
+      translation: "На улице холодно как в морозилке.", // YandexGPT
+      loss: "Energy Loss",
+      options: [
+        { text: "Смысл передан верно, потерь нет", correct: false },
+        { text: "Потеряна экспрессия и грубость (Euphemistic)", correct: true },
+        { text: "Грамматическая ошибка", correct: false }
+      ],
+      info: "YandexGPT использовал стратегию Euphemistic. Для ESFP типа это фатально — теряется весь 'драйв' комика."
+    },
+    {
+      author: "Louis C.K.",
+      type: "INFP",
+      source: "I gotta see the f***ing face of the piece of sh**...", 
+      translation: "Я должен увидеть эту е**чую рожу того куска д*рьма...", // Gemini
+      loss: "None (Good Direct)",
+      options: [
+        { text: "Слишком грубо, нужно было смягчить", correct: false },
+        { text: "Перевод точный, стратегия Direct (Успех)", correct: true },
+        { text: "Потеряна ирония", correct: false }
+      ],
+      info: "Gemini сохранил структуру и лексику (Direct Strategy). Для INFP это подходит, так как передает внутреннюю злость."
+    },
+    {
+      author: "Kevin Hart",
+      type: "ESFP",
+      source: "Get your ass out of the damn oven!",
+      translation: "Пожалуйста, вылезай из духовки.", // Copilot
+      loss: "Tone Loss",
+      options: [
+        { text: "Потеряна императивность (приказной тон)", correct: true },
+        { text: "Слишком много сленга", correct: false },
+        { text: "Неверный перевод слова oven", correct: false }
+      ],
+      info: "Слово 'пожалуйста' убивает персонажа Кевина Харта. Copilot часто страдает излишней вежливостью."
+    },
+    {
+      author: "Louis C.K.",
+      type: "INFP",
+      source: "You go to the zoo, you fat b****", 
+      translation: "Ты отправляешься в зоопарк, милый, но тебе будет некомфортно...", // YandexGPT5
+      loss: "Total Change",
+      options: [
+        { text: "Полная смена интенции (Euphemistic)", correct: true },
+        { text: "Хорошая адаптация (Adaptive)", correct: false },
+        { text: "Сохранена грубость", correct: false }
+      ],
+      info: "ИИ превратил оскорбление в заботу. Это полная потеря личности (Persona Loss)."
+    }
+  ],
+
+  // Данные для Лаборатории (Симуляция промптов)
+  lab: [
+    {
+      id: 1,
+      author: "Kevin Hart",
+      persona: "esfp",
+      source: "I don't get mad as I used to... I did a lot of stupid sh** as a child.",
+      variants: {
+        soft: "Я стал спокойнее. В детстве я часто совершал ошибки. (Скучно)",
+        generic: "Я не злюсь как раньше. Я делал много дерьма ребенком. (Сухо)",
+        ideal: "Я УЖЕ НЕ ТАК ПСИХУЮ, КАК РАНЬШЕ... НО В ДЕТСТВЕ Я ТВОРИЛ ПОЛНУЮ ХЕРНЮ! (ESFP Style!)"
+      }
+    },
+    {
+      id: 2,
+      author: "Louis C.K.",
+      persona: "infp",
+      source: "Yeah, ‘cause you’re f***ing fat, someone shot you in the f***ing head ‘cause you’re fat.", 
+      variants: {
+        soft: "Так как у тебя лишний вес, в тебя стреляли. (Цензура)",
+        generic: "Ты жирный, поэтому тебе выстрелили в голову. (Без эмоций)",
+        ideal: "Да, ты просто жирный ублюдок, вот тебе и прострелили башку, тупо потому что ты жирный. (INFP Cynicism)"
+      }
+    },
+    {
+      id: 3,
+      author: "Kevin Hart",
+      persona: "esfp",
+      source: "Everybody was doing the same dumb s*** every person at the same stupid f***ing moment!", 
+      variants: {
+        soft: "Все вели себя глупо одновременно. (Yandex style)",
+        generic: "Все делали одно и то же тупое дерьмо в один момент.",
+        ideal: "ВСЕ, БЛИН, ТВОРИЛИ ОДНУ И ТУ ЖЕ ХРЕНЬ! КАЖДЫЙ, МАТЬ ЕГО, В ОДНУ И ТУ ЖЕ СЕКУНДУ! (Adaptive/Expressive)"
+      }
+    }
+  ]
+};
+
+/**
+ * ПРИЛОЖЕНИЕ
+ */
+const app = {
+  state: {
+    qIndex: 0,
+    labIndex: 0,
+    prompt: { p: null, s: null }
+  },
+
+  init: function() {
+    this.renderQuestion();
+    this.renderLab();
+  },
+
+  showTab: function(id) {
+    document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    
+    // Подсветка кнопок навигации
+    const navMap = {'theory':0, 'diagnosis':1, 'lab':2};
+    document.querySelectorAll('.nav-btn')[navMap[id]].classList.add('active');
+  },
+
+  // --- ЛОГИКА ДИАГНОСТИКИ ---
+  renderQuestion: function() {
+    const data = DATABASE.quiz[this.state.qIndex];
+    const container = document.getElementById('quiz-content');
+    const counter = document.getElementById('q-counter');
+    const feedback = document.getElementById('quiz-feedback');
+    const nextBtn = document.getElementById('quiz-next-btn');
+
+    counter.textContent = `Case ${this.state.qIndex + 1}/${DATABASE.quiz.length}`;
+    feedback.style.display = 'none';
+    nextBtn.style.display = 'none';
+
+    // Цвет рамки в зависимости от автора
+    const color = data.type === 'ESFP' ? 'var(--esfp)' : 'var(--infp)';
+    
+    let html = `
+      <div class="phrase-box" style="border-left-color: ${color}">
+        <div style="color:${color}; font-weight:bold; margin-bottom:5px;">${data.author} (${data.type})</div>
+        <div style="font-size:1.1rem; margin-bottom:10px;">"${data.source}"</div>
+        <div style="background:rgba(255,255,255,0.1); padding:10px; border-radius:8px;">
+          <strong>AI Перевод:</strong> "${data.translation}"
+        </div>
+      </div>
+      <div class="options-grid">
+    `;
+
+    data.options.forEach((opt, idx) => {
+      html += `<button class="option-btn" onclick="app.checkQuiz(${idx}, this)">${opt.text}</button>`;
+    });
+    html += `</div>`;
+    
+    container.innerHTML = html;
+  },
+
+  checkQuiz: function(idx, btn) {
+    const data = DATABASE.quiz[this.state.qIndex];
+    const feedback = document.getElementById('quiz-feedback');
+    const nextBtn = document.getElementById('quiz-next-btn');
+    const buttons = document.querySelectorAll('.options-grid .option-btn');
+
+    // Блокируем кнопки
+    buttons.forEach(b => b.disabled = true);
+
+    if (data.options[idx].correct) {
+      btn.classList.add('correct');
+      feedback.className = 'feedback'; 
+      feedback.style.borderLeft = '4px solid var(--success)';
+      feedback.innerHTML = `<strong style="color:var(--success)">Верно!</strong><br>${data.info}`;
+    } else {
+      btn.classList.add('wrong');
+      feedback.className = 'feedback';
+      feedback.style.borderLeft = '4px solid var(--danger)';
+      feedback.innerHTML = `<strong style="color:var(--danger)">Ошибка.</strong><br>${data.info}`;
+      // Показать правильный
+      data.options.forEach((opt, i) => { if(opt.correct) buttons[i].classList.add('correct'); });
+    }
+    feedback.style.display = 'block';
+    nextBtn.style.display = 'block';
+  },
+
+  nextQuestion: function() {
+    this.state.qIndex = (this.state.qIndex + 1) % DATABASE.quiz.length;
+    this.renderQuestion();
+  },
+
+  // --- ЛОГИКА ЛАБОРАТОРИИ ---
+  renderLab: function() {
+    const data = DATABASE.lab[this.state.labIndex];
+    const container = document.getElementById('lab-scenario');
+    const consoleDiv = document.getElementById('lab-console');
+    const nextBtn = document.getElementById('lab-next-btn');
+
+    consoleDiv.style.display = 'none';
+    nextBtn.style.display = 'none';
+    this.state.prompt = { p: null, s: null }; // сброс
+
+    // Сброс визуальных кнопок
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+
+    const color = data.persona === 'esfp' ? 'var(--esfp)' : 'var(--infp)';
+
+    container.innerHTML = `
+      <div style="display:flex; justify-content:space-between;">
+        <span style="color:${color}; font-weight:bold;">${data.author}</span>
+        <span style="color:var(--muted); font-size:0.8rem;">ID: ${data.id}</span>
+      </div>
+      <div style="font-size:1.2rem; margin-top:10px; font-style:italic;">"${data.source}"</div>
+    `;
+    container.style.borderLeftColor = color;
+  },
+
+  setPrompt: function(type, val, btn) {
+    this.state.prompt[type] = val;
+    // Визуал
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  },
+
+  runSimulation: function() {
+    const consoleDiv = document.getElementById('lab-console');
+    const nextBtn = document.getElementById('lab-next-btn');
+    const data = DATABASE.lab[this.state.labIndex];
+    const p = this.state.prompt.p;
+    const s = this.state.prompt.s;
+
+    consoleDiv.style.display = 'block';
+    consoleDiv.innerHTML = '> AI processing...';
+
+    setTimeout(() => {
+      if (!p || !s) {
+        consoleDiv.style.color = 'var(--warning)';
+        consoleDiv.innerHTML = '> ОШИБКА: Параметры не заданы. Выберите Персону и Стратегию.';
+        return;
+      }
+
+      let resultText = "";
+      let verdict = "";
+      let isSuccess = false;
+
+      // Логика выбора варианта из базы
+      if (s === 'soft') {
+        resultText = data.variants.soft;
+        verdict = "FAIL. Вы выбрали 'Смягчение'. Стиль комика потерян.";
+        consoleDiv.style.color = 'var(--warning)';
+      } else if (p === 'generic') {
+        resultText = data.variants.generic;
+        verdict = "MEDIOCRE. Без профиля личности (Persona) перевод сухой.";
+        consoleDiv.style.color = '#cbd5e1';
+      } else if (p !== data.persona) {
+         // Выбрали не ту персону (напр. ESFP для Луи Си Кея)
+         resultText = "«ЭЙ! Я ТУТ ГРУЩУ, ЧЕРТ ВОЗЬМИ!» (Неверный тон)";
+         verdict = "MISMATCH. Вы применили профиль " + p.toUpperCase() + " к автору " + data.persona.toUpperCase() + ".";
+         consoleDiv.style.color = 'var(--danger)';
+      } else if (p === data.persona && s === 'raw') {
+        // Идеальное совпадение
+        resultText = data.variants.ideal;
+        verdict = "SUCCESS! Персона сохранена. Стратегия Direct/Adaptive сработала.";
+        isSuccess = true;
+        consoleDiv.style.color = 'var(--success)';
+      }
+
+      consoleDiv.innerHTML = `> Prompt: [Persona: ${p.toUpperCase()}] + [Strategy: ${s.toUpperCase()}]\n----------------------------------\nOUTPUT:\n${resultText}\n----------------------------------\nSYSTEM: ${verdict}`;
+      
+      if (isSuccess) nextBtn.style.display = 'block';
+    }, 500);
+  },
+
+  nextLab: function() {
+    this.state.labIndex = (this.state.labIndex + 1) % DATABASE.lab.length;
+    this.renderLab();
+  }
+};
+
+// Запуск
+document.addEventListener("DOMContentLoaded", () => app.init());
+
+</script>
+</body>
+</html>
